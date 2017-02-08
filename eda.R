@@ -1,7 +1,8 @@
 ### EDA
-library(tm); library(tokenizers)
+library(tm); library(tokenizers); library(dplyr)
 
 # load data
+setwd("C:/Users/MT84249/Desktop/personal/coursera/capstone")
 source("./load_data.R")
 
 # as corpus
@@ -14,16 +15,16 @@ sample_corpus <- tm_map(sample_corpus, content_transformer(removePunctuation))
 #sample_corpus <- tm_map(sample_corpus, removeNumbers)
 #sample_corpus <- tm_map(sample_corpus, removeWords, stopwords("english"))
 
-inspect(sample_corpus)
-
 # term document matrix
 tdm <- TermDocumentMatrix(sample_corpus)
-dtm <- DocumentTermMatrix(sample_corpus)
-inspect(tdm)
+temp <- inspect(tdm)
+freqmatrix <- data.frame(word = rownames(temp), freq = rowSums(temp))
+freqmatrix <- arrange(freqmatrix, desc(freq))
+plot(freqmatrix$word, freqmatrix$freq, type = "l")
+
 findFreqTerms(tdm, 10)
 findAssocs(tdm, "love", 0.5)
-rowsum(tdm[1])
-data.frame(tdm$dimnames$Terms, rowsum(tdm$v))
+
 # charts
 
 # synonyms 
