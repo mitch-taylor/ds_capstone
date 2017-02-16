@@ -2,76 +2,58 @@
 library(tm); library(tokenizers); library(dplyr)
 
 # load data
-setwd("C:/Users/MT84249/Desktop/personal/coursera/capstone")
-source("./load_data.R")
+# setwd("C:/Users/MT84249/Desktop/personal/coursera/capstone")
+setwd("~/files/data_science/r/10_capstone")
 
-# as corpus
-sample <- VectorSource(blogs[1:200])
-sample_corpus <- Corpus(sample)
+# load data
+load_data <- function(filename) {
+    readLines(paste0("./final/en_US/", filename), 
+              encoding = "UTF-8", skipNul=TRUE)
+}
+#twitter <- load_data("en_US.twitter.txt")
+blogs <- load_data("en_US.blogs.txt")
+#news <- load_data("en_US.news.txt")
 
-# clean corpus
-sample_corpus <- tm_map(sample_corpus, content_transformer(tolower))
-sample_corpus <- tm_map(sample_corpus, content_transformer(removePunctuation))
-#sample_corpus <- tm_map(sample_corpus, removeNumbers)
-#sample_corpus <- tm_map(sample_corpus, removeWords, stopwords("english"))
+# sample
+sample <- sample(blogs, 20000, replace=FALSE)
+rm(blogs)
 
-# term document matrix
+# Overall stats
+generate_stats <- function(indat) {
+    print(paste(deparse(substitute(indat)), "has", length(indat), "entries."))
+    total_words <- sapply(gregexpr("\\w+", sample), length) + 1
+    print(paste("A summary of the character count is provided below."))
+    summary(total_words)
+} 
+generate_stats(sample)
+
+# clean data
+sample_corpus <- VCorpus(VectorSource(blogs)) %>%
+    tm_map(content_transformer(tolower)) %>%
+    tm_map(content_transformer(removePunctuation))
+
+# Get diversity of each type of text
 tdm <- TermDocumentMatrix(sample_corpus)
-temp <- inspect(tdm)
-freqmatrix <- data.frame(word = rownames(temp), freq = rowSums(temp))
-freqmatrix <- arrange(freqmatrix, desc(freq))
-plot(freqmatrix$word, freqmatrix$freq, type = "l")
+freqmatrix <- inspect(tdm)
+freqmatrix <- data.frame(word = rownames(freqmatrix), freq = rowSums(freqmatrix)) %>%
+    arrange(desc(freq))
+unique <- nrow(freqmatrix)
+total <- sum(freqmatrix$freq)
+diversity <- unique / sqrt(2 * total)
 
-findFreqTerms(tdm, 10)
-findAssocs(tdm, "love", 0.5)
-
-# charts
-
-# synonyms 
-
-# charts
+#diversity = number unique words / sqrt ( 2 * total words)
 
 
-sample_corpus[[5]]
+# output some charts and stats on the word distribution - plot against
+# that rule of thumb
+
+breakNb <- 1:d[1,]$freq
+hist(d$freq, breaks=breakNb, freq=FALSE, col="lightgreen", border="black",
+     main="Distribution of frequencies", xlab="words frequencies")
+
+barplot(d[1:30,]$percent, names.arg=d[1:30,]$word, col="lightblue", las=2,
+        main="30 most frequent words", ylab="word frequencies (%)")
 
 
-#ideas - use synonym mapping
-# how to evluate predictions - classification accuracy?
-# sampling, combining documents- similarities / differences?
-ngrams(blogs[5], 2)
-
-TermDocMatrix()
-(NGramTokenizer)
-
-#TermDocMatrix(col, control = list(tokenize = NGramTokenizer))
-#or a tokenizer from the OpenNLP toolkit (via openNLP’s tokenize function)
-#R> TermDocMatrix(col, control = list(tokenize = tokenize))
-
-#Similarly, we can use external modules for all other processing steps (mainly via internal
-#                                                                       calls to termFreq which generates a term frequency vector from a text document and gives
-#                                                                       an extensive list of available control options), like stemming (e.g., the Weka stemmers via
-#                                                                                                                                       the Snowball package), stopword removal (e.g., via custom stopword lists), or user supplied
-#dictionaries (a method to restrict the generated terms in the term-document matrix).
-
-wordStem()
-stripWhitespace(acq[[10]])
-tmTolower(acq[[10]])
-
-mystopwords <- c("and", "for", "in", "is", "it", "not", "the", "to")
-R> removeWords(acq[[10]], mystopwords)
-
-tmMap(acq, removeWords, mystopwords)
-
-library("wordnet")
-R> synonyms("company")
-replaceWords(acq[[10]], synonyms(dict, "company"), by = "company")
-and for the whole collection, using tmMap():
-    R> tmMap(acq, replaceWords, synonyms(dict, "company"), by = "company")
-
-R> crudeTDM <- TermDocMatrix(crude, control = list(stopwords = TRUE))
-R> (crudeTDMHighFreq <- findFreqTerms(crudeTDM, 10, Inf))
-Data(crudeTDM)[1:10, crudeTDMHighFreq]
-
-findAssocs(crudeTDM, "oil", 0.85)
 
 
